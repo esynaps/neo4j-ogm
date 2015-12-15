@@ -302,7 +302,13 @@ CONTENT;
         static $prototypes = array();
 
         if (!array_key_exists($proxyClass, $prototypes)) {
-            $prototypes[$proxyClass] = unserialize(sprintf('O:%d:"%s":0:{}', strlen($proxyClass), $proxyClass));
+            if (PHP_VERSION_ID === 50429 || PHP_VERSION_ID === 50513 || PHP_VERSION_ID >= 50600) {
+                $refClass = new \ReflectionClass($proxyClass);
+                $prototypes[$proxyClass] = $refClass->newInstanceWithoutConstructor();
+            } else {
+                $prototypes[$proxyClass] = unserialize(sprintf('O:%d:"%s":0:{}', strlen($proxyClass), $proxyClass));
+            }
+
         }
 
         return clone $prototypes[$proxyClass];
