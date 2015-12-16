@@ -1,5 +1,5 @@
 {
-    "name": "hirevoice/neo4jphp-ogm",
+    "name": "esynaps/neo4j-ogm",
     "type": "library",
     "description": "Doctrine2-style entity mapper for Neo4j graph database",
     "keywords": ["neo4j","graph","database","entity-mapper","doctrine"],
