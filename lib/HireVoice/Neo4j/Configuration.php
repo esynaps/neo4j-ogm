@@ -33,6 +33,7 @@ class Configuration
     private $host = 'localhost';
     private $port = 7474;
     private $proxyDir = '/tmp';
+    private $proxyNamespace = 'Proxies';
     private $debug = false;
     private $annotationReader;
     private $username;
@@ -61,6 +62,10 @@ class Configuration
 
         if (isset($configs['proxy_dir'])) {
             $this->proxyDir = $configs['proxy_dir'];
+        }
+
+        if (isset($configs['proxy_namespace'])) {
+            $this->proxyNamespace = $configs['proxy_namespace'];
         }
 
         if (isset($configs['annotation_reader'])) {
@@ -103,7 +108,7 @@ class Configuration
 
     function getProxyFactory()
     {
-        return new Proxy\Factory($this->proxyDir, $this->debug);
+        return new Proxy\Factory($this->proxyDir, $this->proxyNamespace,$this->debug);
     }
 
     function getMetaRepository()
@@ -122,4 +127,3 @@ class Configuration
         }
     }
 }
-
