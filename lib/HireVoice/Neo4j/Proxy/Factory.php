@@ -29,7 +29,6 @@ use HireVoice\Neo4j\Extension\ArrayCollection as ExtendedArrayCollection;
 use HireVoice\Neo4j\Meta\Entity as Meta;
 use HireVoice\Neo4j\Meta\Repository;
 use ReflectionMethod;
-use ReflectionObject;
 
 class Factory
 {
@@ -37,11 +36,6 @@ class Factory
      * @var string
      */
     private $proxyDir;
-
-    /**
-     * @var string
-     */
-    private $proxyNamespace;
 
     /**
      * @var bool
@@ -52,10 +46,9 @@ class Factory
      * @param string $proxyDir
      * @param bool $debug
      */
-    function __construct($proxyDir = '/tmp', $proxyNamespace = 'Proxies', $debug = false)
+    function __construct($proxyDir = '/tmp', $debug = false)
     {
         $this->proxyDir = rtrim($proxyDir, '/');
-        $this->proxyNamespace = $proxyNamespace;
         $this->debug = (bool)$debug;
     }
 
@@ -94,19 +87,8 @@ class Factory
                 $proxy->__addHydrated($property->getName());
             }
         }                           
-
-        return $this->cast($class, $proxy);
-    }
-
-    private function getNamespace($className) {
-        $namespace = explode('\\', $className);
-        unset($namespace[count($namespace)-1]);
-        return implode('\\', $namespace);
-    }
-
-    private function getClassName($className) {
-        $namespace = explode('\\', $className);
-        return array_pop($namespace);
+        
+        return $proxy;
     }
 
     /**
@@ -119,11 +101,11 @@ class Factory
         $proxyClass = $meta->getProxyClass();
         $className = $meta->getName();
 
-
-        if (class_exists($this->getClassName($className), false)) {
-            return $this->initializeProperties($this->newInstance($this->getClassName($className)), $meta);
+        if (class_exists($proxyClass, false)) {
+            return $this->initializeProperties($this->newInstance($proxyClass), $meta);
         }
-        $targetFile = "{$this->proxyDir}/{$this->proxyNamespace}/$proxyClass.php";
+
+        $targetFile = "{$this->proxyDir}/$proxyClass.php";
         if ($this->debug || !file_exists($targetFile)) {
             $functions = '';
             $reflectionClass = new \ReflectionClass($className);
@@ -151,12 +133,10 @@ class Factory
 
             $content = <<<CONTENT
 <?php
-use {$this->proxyNamespace}\\{$this->getNamespace($className)};
-
 use HireVoice\\Neo4j\\Extension;
 use HireVoice\\Neo4j\\Extension\\ArrayCollection;
 
-class {$this->getClassName($className)} extends $className implements HireVoice\\Neo4j\\Proxy\\Entity
+class $proxyClass extends $className implements HireVoice\\Neo4j\\Proxy\\Entity
 {
     private \$neo4j_hydrated = array();
     private \$neo4j_meta;
@@ -282,12 +262,12 @@ class {$this->getClassName($className)} extends $className implements HireVoice\
 
 
 CONTENT;
-            if (!is_dir("{$this->proxyDir}/{$this->proxyNamespace}")) {
-                if (false === @mkdir("{$this->proxyDir}/{$this->proxyNamespace}", 0775, true)) {
+            if (!is_dir($this->proxyDir)) {
+                if (false === @mkdir($this->proxyDir, 0775, true)) {
                     throw new Exception('Proxy Dir is not writable');
                 }
             } else {
-                if (!is_writable("{$this->proxyDir}/{$this->proxyNamespace}")) {
+                if (!is_writable($this->proxyDir)) {
                     throw new Exception('Proxy Dir is not writable');
                 }
             }
@@ -296,7 +276,7 @@ CONTENT;
 
         require $targetFile;
 
-        return $this->initializeProperties($this->newInstance($this->getClassName($className)), $meta);
+        return $this->initializeProperties($this->newInstance($proxyClass), $meta);
     }
 
     /**
@@ -330,6 +310,7 @@ CONTENT;
             }
 
         }
+
         return clone $prototypes[$proxyClass];
     }
 
@@ -393,29 +374,6 @@ CONTENT;
     }
 
 FUNC;
-    }
-
-    function cast($destination, $sourceObject)
-    {
-        if (is_string($destination)) {
-            $destination = new $destination();
-        }
-        $sourceReflection = new ReflectionObject($sourceObject);
-        $destinationReflection = new ReflectionObject($destination);
-        $sourceProperties = $sourceReflection->getProperties();
-        foreach ($sourceProperties as $sourceProperty) {
-            $sourceProperty->setAccessible(true);
-            $name = $sourceProperty->getName();
-            $value = $sourceProperty->getValue($sourceObject);
-            if ($destinationReflection->hasProperty($name)) {
-                $propDest = $destinationReflection->getProperty($name);
-                $propDest->setAccessible(true);
-                $propDest->setValue($destination,$value);
-            } else {
-                $destination->$name = $value;
-            }
-        }
-        return $destination;
     }
 }
 
