@@ -240,7 +240,7 @@ class Property
             case self::FORMAT_DATE:
             if ($raw) {
                 $value = clone $raw;
-                $value->setTimezone(new \DateTimeZone('UTC'));
+                //$value->setTimezone(new \DateTimeZone('UTC'));
 
                 return $value->format('Y-m-d H:i:s');
             } else {
@@ -275,8 +275,8 @@ class Property
             case self::FORMAT_DATE:
             $date = null;
             if ($value) {
-                $date = new \DateTime($value . ' UTC');
-                $date->setTimezone(new \DateTimeZone(date_default_timezone_get()));
+                $date = new \DateTime($value/* . ' UTC'*/);
+                //$date->setTimezone(new \DateTimeZone(date_default_timezone_get()));
             }
 
             $this->property->setValue($entity, $date);

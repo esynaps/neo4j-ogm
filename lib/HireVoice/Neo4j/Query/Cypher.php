@@ -80,6 +80,10 @@ class Cypher extends Query
 
         return $this;
     }
+	
+	public function getQuery() {
+		return $this->query;
+	}
 
     /**
      * @param string $mode
