@@ -265,7 +265,7 @@ class Property
             break;
 
             case self::FORMAT_ARRAY:
-            $this->property->setValue($entity, unserialize($value));
+            $this->property->setValue($entity, is_string($value) ? unserialize($value) : $value);
             break;
 
             case self::FORMAT_JSON:
