@@ -229,10 +229,8 @@ class Property
         switch ($this->format) {
             case self::FORMAT_SCALAR:
             case self::FORMAT_RELATION:
-            return $raw;
-
             case self::FORMAT_ARRAY:
-            return serialize($raw);
+            return $raw;
 
             case self::FORMAT_JSON:
             return json_encode($raw);
